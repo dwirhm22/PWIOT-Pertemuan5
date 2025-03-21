@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistem Monitoring Suhu</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .status-badge {
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .status-on {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-off {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h2 class="mb-4">Sistem Monitoring Suhu</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card text-center bg-dark text-white">
+                    <div class="card-header bg-info">Status Sensor Suhu</div>
+                    <div class="card-body">
+                        <h3 id="sensorStatus">Loading...</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-center bg-dark text-white">
+                    <div class="card-header bg-info">Status Lampu WS2818B</div>
+                    <div class="card-body">
+                        <h3 id="lampStatus">Loading...</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button class="btn btn-warning" onclick="window.location.href='recordtable.html'">
+                <i class="fas fa-history"></i> Lihat Riwayat Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Load Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDyEz9QRv53BGQHxmUCXo950wbPwTTpG4",
+            authDomain: "monitoring-suhu-83777.firebaseapp.com",
+            databaseURL: "https://monitoring-suhu-83777-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "monitoring-suhu-83777",
+            storageBucket: "monitoring-suhu-83777.appspot.com",
+            messagingSenderId: "989706231550",
+            appId: "1:989706231550:web:13b25770706b61c305cfaf"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Fungsi untuk update status sensor dan lampu secara real-time
+        function updateStatus() {
+            database.ref("sensor_data").limitToLast(1).on("value", (snapshot) => {
+                if (snapshot.exists()) {
+                    let data;
+                    snapshot.forEach(child => {
+                        data = child.val(); // Ambil data terakhir
+                    });
+
+                    console.log("Data terbaru dari Firebase:", data); // Debugging
+
+                    // Update Status Sensor
+                    document.getElementById("sensorStatus").innerHTML = data.temperature
+                        ? `<span class="status-badge status-on">Suhu: ${data.temperature}°C</span>`
+                        : `<span class="status-badge status-off">Data tidak ditemukan</span>`;
+
+                    // Update Status Lampu
+                    document.getElementById("lampStatus").innerHTML = data.lamp_status === "Red"
+                        ? '<span class="status-badge status-off">Lampu Merah</span>'
+                        : '<span class="status-badge status-on">Lampu Hijau</span>';
+                } else {
+                    console.warn("Data tidak ditemukan di Firebase!");
+                    document.getElementById("sensorStatus").innerHTML = "Data tidak ditemukan!";
+                    document.getElementById("lampStatus").innerHTML = "Data tidak ditemukan!";
+                }
+            }, (error) => {
+                console.error("Error fetching data:", error);
+                document.getElementById("sensorStatus").innerText = "Error loading data!";
+                document.getElementById("lampStatus").innerText = "Error loading data!";
+            });
+        }
+
+        // Panggil fungsi update saat halaman dimuat
+        updateStatus();
+    </script>
+</body>
+</html>

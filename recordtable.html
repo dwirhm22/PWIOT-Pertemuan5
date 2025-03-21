@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Riwayat Data Sensor dan Lampu WS2818B</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .table {
+            background: white;
+            color: black;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .status-on {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-off {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Riwayat Data Sensor dan Lampu WS2818B</h2>
+        <button class="btn btn-primary mb-3" onclick="window.location.href='index.html'">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <button class="btn btn-success mb-3" onclick="fetchData()">
+            <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+        <table class="table table-bordered text-center">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>No</th>
+                    <th>Status Sensor</th>
+                    <th>Status Lampu</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+                <tr><td colspan="3">Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDyEz9QRv53BGQHxmUCXo950wbPwTTpG4",
+            authDomain: "monitoring-suhu-83777.firebaseapp.com",
+            databaseURL: "https://monitoring-suhu-83777-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "monitoring-suhu-83777",
+            storageBucket: "monitoring-suhu-83777.appspot.com",
+            messagingSenderId: "989706231550",
+            appId: "1:989706231550:web:13b25770706b61c305cfaf"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Fungsi mengambil data dari Firebase
+        function fetchData() {
+            database.ref("sensor_data").limitToLast(10).on("value", (snapshot) => {
+                let tableBody = "";
+                if (snapshot.exists()) {
+                    let index = 1;
+                    snapshot.forEach(child => {
+                        let data = child.val();
+                        let temperature = data.temperature ? `${data.temperature}°C` : "Tidak Ada Objek";
+                        let lampuStatus = data.lamp_status === "Merah" ? "Lampu Merah" : "Lampu Hijau";
+                        let lampClass = data.lamp_status === "Merah" ? "status-off" : "status-on";
+
+                        tableBody += `
+                            <tr>
+                                <td>${index++}</td>
+                                <td>
+                                    <span class="status-badge status-on">
+                                        ${temperature}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge ${lampClass}">
+                                        ${lampuStatus}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableBody = `<tr><td colspan="3">Tidak ada data tersedia</td></tr>`;
+                }
+                document.getElementById("dataTable").innerHTML = tableBody;
+            }, (error) => {
+                console.error("Error fetching data:", error);
+                document.getElementById("dataTable").innerHTML = `<tr><td colspan="3">Gagal memuat data!</td></tr>`;
+            });
+        }
+
+        // Panggil fungsi untuk mengambil data saat halaman dimuat
+        fetchData();
+
+        // Auto-refresh data setiap 5 detik
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
